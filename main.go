@@ -33,6 +33,7 @@ type Runner struct {
 }
 
 func (r *Runner) Run(ctx context.Context) error {
+	r.lastSuccess = time.Now()
 	for {
 		now := time.Now()
 		cmd := exec.CommandContext(ctx, r.watchCmd[0], r.watchCmd[1:]...)
