@@ -5,9 +5,9 @@
 write $HOME/.config/locdog/config.json as below
 
 #+begin_src json
-   {
+  {
       "default_interval": 5,
-      "default_threshold": 60,
+      "default_threshold": 300,
       "default_alert_cmd": [
           "echo"
       ],
@@ -20,10 +20,12 @@ write $HOME/.config/locdog/config.json as below
                   "-sound",
                   "default",
                   "-message",
-                  "warning!"
+                  "you shoud org-clock-in"
               ],
               "watch_cmd": [
-                  "false"
+                  "bash",
+                  "-c",
+                  "test $(emacsclient -e '(org-clock-is-active)') = t"
               ]
           }
       ]
