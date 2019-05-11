@@ -5,25 +5,27 @@
 write $HOME/.config/locdog/config.json as below
 
 #+begin_src json
-  {
-      "targets": {
-          "watch_cmd": [
-              "false"
-          ],
-          "alert_cmd": [
-              "terminal-notifier",
-              "-title",
-              "LocDog",
-              "-sound",
-              "default",
-              "-message",
-              "warning!"
-          ]
-      },
+   {
+      "default_interval": 5,
+      "default_threshold": 60,
       "default_alert_cmd": [
           "echo"
       ],
-      "default_threshold": 60,
-      "default_interval": 5
+      "targets": [
+          {
+              "alert_cmd": [
+                  "terminal-notifier",
+                  "-title",
+                  "LocDog",
+                  "-sound",
+                  "default",
+                  "-message",
+                  "warning!"
+              ],
+              "watch_cmd": [
+                  "false"
+              ]
+          }
+      ]
   }
 #+end_src
