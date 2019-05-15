@@ -35,25 +35,24 @@ type Runner struct {
 func (r *Runner) Run(ctx context.Context) error {
 	r.lastSuccess = time.Now()
 	for {
-		now := time.Now()
-		cmd := exec.CommandContext(ctx, r.watchCmd[0], r.watchCmd[1:]...)
-		if err := cmd.Run(); err != nil {
-			select {
-			case <-ctx.Done():
-				return err
-			default:
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+			now := time.Now()
+			cmd := exec.CommandContext(ctx, r.watchCmd[0], r.watchCmd[1:]...)
+			if err := cmd.Run(); err == nil {
+				r.lastSuccess = now
 			}
-		} else {
-			r.lastSuccess = now
-		}
 
-		if now.Sub(r.lastSuccess) > r.threshold {
-			cmd := exec.CommandContext(ctx, r.alertCmd[0], r.alertCmd[1:]...)
-			if err := cmd.Run(); err != nil {
-				return err
+			if now.Sub(r.lastSuccess) > r.threshold {
+				cmd := exec.CommandContext(ctx, r.alertCmd[0], r.alertCmd[1:]...)
+				if err := cmd.Run(); err != nil {
+					return err
+				}
 			}
+			time.Sleep(r.interval)
 		}
-		time.Sleep(r.interval)
 	}
 }
 
