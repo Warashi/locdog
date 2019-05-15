@@ -25,7 +25,7 @@ write $HOME/.config/locdog/config.json as below
               "watch_cmd": [
                   "bash",
                   "-c",
-                  "test $(emacsclient -e '(org-clock-is-active)') = t"
+                  "test $(emacsclient -e '(org-clock-is-active)') != nil"
               ]
           }
       ]
