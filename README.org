@@ -27,16 +27,7 @@ write $HOME/.config/locdog/config.json as below
               "watch_cmd": [
                   "bash",
                   "-c",
-                  "test $(emacsclient -e '(org-clock-is-active)') != nil"
-              ],
-              "no_data_cmd": [
-                  "terminal-notifier",
-                  "-title",
-                  "LocDog",
-                  "-sound",
-                  "default",
-                  "-message",
-                  "NoData: org-clock-in"
+                  "test \"$(emacsclient -e '(org-clock-is-active)')\" != nil"
               ]
           }
       ]

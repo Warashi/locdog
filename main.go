@@ -38,7 +38,6 @@ type Config struct {
 		Threshold Duration `json:"threshold"`
 		Timeout   Duration `json:"timeout"`
 		AlertCmd  []string `json:"alert_cmd"`
-		NoDataCmd []string `json:"no_data_cmd"`
 		WatchCmd  []string `json:"watch_cmd"`
 	} `json:"targets"`
 }
@@ -63,10 +62,8 @@ func (c *Config) FillWithDefaults() {
 type Target struct {
 	Name        string
 	LastSuccess time.Time
-	LastData    time.Time
 	Threshold   time.Duration
 	AlertCmd    []string
-	NoDataCmd   []string
 }
 
 type Result struct {
@@ -91,38 +88,13 @@ func (r *Server) Run(ctx context.Context) error {
 	for res := range r.ResCh {
 		now := time.Now()
 		tgt := r.Targets[res.Name]
-		if tgt.LastData.Before(res.Timestamp) {
-			tgt.LastData = res.Timestamp
-			if res.Succeeded {
-				tgt.LastSuccess = res.Timestamp
-			}
-		}
-		if tgt.NoDataCmd != nil && now.Sub(tgt.LastData) > tgt.Threshold {
-			go func(cmd []string) {
-				exec.Command(cmd[0], cmd[1:]...).Run()
-			}(tgt.NoDataCmd)
-			continue
+		if res.Succeeded {
+			tgt.LastSuccess = res.Timestamp
 		}
 		if tgt.AlertCmd != nil && now.Sub(tgt.LastSuccess) > tgt.Threshold {
 			go func(cmd []string) {
 				exec.Command(cmd[0], cmd[1:]...).Run()
 			}(tgt.AlertCmd)
-		}
-	}
-	return nil
-}
-
-func (r *Server) NoDataWatch(ctx context.Context) error {
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
-	for range ticker.C {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-			for _, t := range r.Targets {
-				r.ResCh <- Result{Name: t.Name}
-			}
 		}
 	}
 	return nil
@@ -189,10 +161,8 @@ func main() {
 		s.Register(&Target{
 			Name:        t.Name,
 			LastSuccess: now,
-			LastData:    now,
 			Threshold:   t.Threshold.Value(),
 			AlertCmd:    t.AlertCmd,
-			NoDataCmd:   t.NoDataCmd,
 		})
 		g.Go(func() error {
 			w := &Watcher{
@@ -205,9 +175,6 @@ func main() {
 			return w.Run(ctx)
 		})
 	}
-	g.Go(func() error {
-		return s.NoDataWatch(ctx)
-	})
 	g.Go(func() error {
 		return s.Run(ctx)
 	})
