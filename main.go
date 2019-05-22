@@ -91,7 +91,7 @@ func (r *Server) Run(ctx context.Context) error {
 	for res := range r.ResCh {
 		now := time.Now()
 		tgt := r.Targets[res.Name]
-		if tgt.LastSuccess.After(res.Timestamp) {
+		if tgt.LastData.Before(res.Timestamp) {
 			tgt.LastData = res.Timestamp
 			if res.Succeeded {
 				tgt.LastSuccess = res.Timestamp
@@ -180,15 +180,18 @@ func main() {
 
 	g, ctx := errgroup.WithContext(context.Background())
 
+	now := time.Now()
 	s := new(Server)
 	ResCh := make(chan Result)
 	s.ResCh = ResCh
 	for _, t := range cfg.Targets {
 		s.Register(&Target{
-			Name:      t.Name,
-			Threshold: t.Threshold.Value(),
-			AlertCmd:  t.AlertCmd,
-			NoDataCmd: t.NoDataCmd,
+			Name:        t.Name,
+			LastSuccess: now,
+			LastData:    now,
+			Threshold:   t.Threshold.Value(),
+			AlertCmd:    t.AlertCmd,
+			NoDataCmd:   t.NoDataCmd,
 		})
 		g.Go(func() error {
 			w := &Watcher{
@@ -203,6 +206,9 @@ func main() {
 	}
 	g.Go(func() error {
 		return s.NoDataWatch(ctx)
+	})
+	g.Go(func() error {
+		return s.Run(ctx)
 	})
 
 	if err := g.Wait(); err != nil {
