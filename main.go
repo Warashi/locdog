@@ -184,7 +184,8 @@ func main() {
 	s := new(Server)
 	ResCh := make(chan Result)
 	s.ResCh = ResCh
-	for _, t := range cfg.Targets {
+	for i := range cfg.Targets {
+		t := cfg.Targets[i]
 		s.Register(&Target{
 			Name:        t.Name,
 			LastSuccess: now,
